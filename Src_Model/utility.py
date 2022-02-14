@@ -16,39 +16,10 @@ from sklearn.ensemble import RandomForestClassifier
 from nltk.corpus import stopwords
 
 class Model:
-
-    classification_model_file_path = "Src_Model\\classification_rf.pkl"
-    recommendation_model_file_path = "Src_Model\\recommendation.pkl"
-    tfidf_model_file_path = "Src_Model\\tfidf_model.pkl"
-    reviews_file_path = "Data\\sample30.csv"
-
-
     def __init__(self):
-        self.review_df, self.rating_df = self.load_and_clean_reviews()
-        self.classification_model = self.get_classification_model()
-        self.item_final_rating = self.get_recommendation_model()
-        self.tfidf_model = self.get_tfidf_model_model()
+        print("*****Model Object has been created*****")
 
-        self.set_up_text_processing()
-
-
-    def get_parent_directory(self):
-        parent_directory = os.path.abspath('.')
-        print(parent_directory)
-        return parent_directory
-
-    def save_obj(self, obj, file_name ):
-        with open(file_name + '.pkl', 'wb') as f:
-            pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
-
-    def load_obj(self, file_name):
-        pkl_content = open(file_name, "rb")
-        obj = pickle.load(pkl_content)
-        return obj
-
-
-    def load_and_clean_reviews(self):
-        review_df = pd.read_csv(self.get_parent_directory() + '\\' + self.reviews_file_path)
+    def clean_reviews(self, review_df):
         print(review_df.shape)
         # Lets drop the records where username isn't given
         #review_df = review_df[review_df['user_sentiment'].notna()]
@@ -68,48 +39,33 @@ class Model:
 
         rating_df = rating_df.drop_duplicates(subset = ['reviews_username', 'reviews_rating', 'id'], keep = 'last').reset_index(drop = True)
         print('Rating DF Shape', rating_df.shape)
+
+        self.review_df = review_df
+        self.rating_df = rating_df
         return review_df, rating_df
 
+    def set_classification_model(self, classification_model):
+        self.classification_model = classification_model
 
-    def save_classification_model(self, obj):
-        self.save_obj(obj, self.get_parent_directory() + '\\' + self.classification_model_file_path)
-
-    def get_classification_model(self):
-        classification_model = self.load_obj(self.get_parent_directory() + '\\' + self.classification_model_file_path)
-        return classification_model
-
-    def save_recommendation_model(self, obj):
-        self.save_obj(obj, self.get_parent_directory() + '\\' + self.recommendation_model_file_path)
-
-    def get_recommendation_model(self):
-        # lets load recommendation model pickel file
-        recommendation_matrix = self.load_obj(self.get_parent_directory() + '\\' + self.recommendation_model_file_path)
-    
+    def set_recommendation_model(self, recommendation_matrix):
         # lets build recommendation model from correlation matrix
         rating_df_pivot = self.rating_df.pivot_table(index='reviews_username',columns='id',values='reviews_rating').T
         item_predicted_ratings = np.dot((rating_df_pivot.fillna(0).T),recommendation_matrix)
-
         # dummy table to mask already rated products
         dummy_df = self.rating_df.copy()
         dummy_df['reviews_rating'] = dummy_df['reviews_rating'].apply(lambda x: 0 if x>=1 else 1)
         dummy_train_pivot = dummy_df.pivot_table(index='reviews_username', columns='id', values='reviews_rating').fillna(1)
-
         # final rating dataframe
-        item_final_rating = np.multiply(item_predicted_ratings,dummy_train_pivot)
-        return item_final_rating
+        print("*****Before creating item final rating")
+        self.item_final_rating = np.multiply(item_predicted_ratings,dummy_train_pivot)
+        print("*****After creating item final rating")
 
-    def save_tfidf_model(self, obj):
-        self.save_obj(obj, self.get_parent_directory() + '\\' + self.tfidf_model_file_path)
-
-    def get_tfidf_model_model(self):
-        tfidf_model = self.load_obj(self.get_parent_directory() + '\\' + self.tfidf_model_file_path)
-        print(type(tfidf_model))
-        return tfidf_model   
-
+    def set_tfidf_model(self, tfidf_model):
+        self.tfidf_model = tfidf_model
 
     def get_recommendation_for_user(self, username):
-        #item_final_rating = self.get_recommendation_model()
         print("Generated Recommendation Model")
+        print("Shape of review_Df is", self.review_df.shape)
         top_20 = self.item_final_rating.loc[username].sort_values(ascending=False)[0:20]
         print("Got top 20 products")
         top_5 = self.filter_recommended_products(list(top_20.index))
