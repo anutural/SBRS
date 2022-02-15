@@ -2,6 +2,7 @@ import os
 import pickle
 
 import json
+import random
 
 import pandas as pd
 pd.options.mode.chained_assignment = None  # default='warn'
@@ -68,10 +69,17 @@ class Model:
     def validate_user(self, username):
         return username in set(self.review_df.reviews_username)
 
+    def get_random_user(self):
+        return random.choice(list(self.review_df.reviews_username))
+
     def get_recommendation_for_user(self, username):
         top_20 = self.item_final_rating.loc[username].sort_values(ascending=False)[0:20]
         top_5 = self.filter_recommended_products(list(top_20.index))
         return  top_5
+
+    def get_purchase_history(self, user):
+        user_df = self.rating_df[self.rating_df.reviews_username == user]
+        return self.prepare_json_data(user_df, ['name', 'reviews_rating'])
     # *****************************************************************
 
 
@@ -84,10 +92,10 @@ class Model:
         recommended_df['pred_sentiment'] = self.classify_sentiment(recommended_df)
         top_5 = self.get_top_5_positive_items(recommended_df)
         top_5_df = self.review_df[self.review_df.id.isin(top_5)]
-        return self.prepare_json_data(top_5_df)
+        return self.prepare_json_data(top_5_df, ['name', 'brand', 'categories'])
 
-    def prepare_json_data(self, top_5_df):
-        top_5_df = top_5_df[['name', 'brand', 'categories']].drop_duplicates(subset = ['name', 'brand', 'categories'], keep = 'last')
+    def prepare_json_data(self, top_5_df, fields):
+        top_5_df = top_5_df[fields].drop_duplicates(subset = fields, keep = 'last')
         json_list = []
         for index in  top_5_df.index:
             json_list.append(json.loads(top_5_df.loc[index].to_json()))

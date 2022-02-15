@@ -62,16 +62,21 @@ model = set_up_model()
 @app.route("/", methods=["POST", "GET"])
 def home():
     if request.method == "POST":
-        user = str(request.form['projectFilepath'])
+        user = str(request.form['user_name'])
+
+        if user == "random":
+            user = model.get_random_user()
+
         if model.validate_user(user):
-            data_2 = model.get_recommendation_for_user(user)
-            return render_template('index.html', data=data_2, init_msg = "Recommendations for " + user)
+            recommendations = model.get_recommendation_for_user(user)
+            purchase_history = model.get_purchase_history(user)
+            return render_template('index.html', data=recommendations, history = purchase_history, init_msg = "Recommendations for " + user, init_msg_2 = "Purchase History")
         else:
-            return render_template('index.html', data = [], init_msg = "No such user found")
+            return render_template('index.html', data = [], history = [], init_msg = "No such user found", init_msg_2 = "")
 
 
     if request.method == "GET":
-        return render_template('index.html', data="", init_msg = "")
+        return render_template('index.html', data="", history = [], init_msg = "", init_msg_2 = "")
 
 if __name__ == '__main__':
     model = set_up_model()

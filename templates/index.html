@@ -25,6 +25,13 @@
               border: 1px solid rgb(185, 191, 197);
               padding: 10px;
             }
+
+            .group_box {
+              margin: auto;
+              width: 60%;
+              border: 1px solid rgb(185, 191, 197);
+              padding: 10px;
+            }
         </style>
     </head>
 
@@ -36,14 +43,16 @@
             
             <div class= "center_inner">
             <form action="#" method="post">
-                <p class = "center_text">Enter the user-name (case sensitive) and click on submit button</p>
-                <input  class="center_user_form" type="text" name="projectFilepath">
+                <p class = "center_text">Enter the user-name or type 'random' (case sensitive) and click on submit button</p>
+                <input  class="center_user_form" type="text" name="user_name">
                 <input class="center_user_form" type="submit">
             </form>
             </div>
             <br>
-        
-            {{init_msg}}
+            
+            <hr>
+
+            <h2>{{init_msg}}</h2>
             <br>
             {% for item_record in data %}
                 <h3><p>{{item_record.name}}</p></h3>
@@ -52,6 +61,17 @@
                         <li>{{item_record.categories}}</li>
                     </ul>   
             {% endfor %}
+            <br>
+
+            <hr>
+
+            <h2>{{init_msg_2}}</h2>
+            <br>
+            <ul>
+                {% for item_record in history %}
+                    <li><h3><p>Product: {{item_record.name}} -- Rating: {{item_record.reviews_rating}}</p></h3></li>
+                {% endfor %}
+            </ul>
         </div>
     </body>
 </html>
