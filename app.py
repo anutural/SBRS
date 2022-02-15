@@ -17,8 +17,9 @@ recommendation_model_file_path = "Src_Model/recommendation.pkl"
 tfidf_model_file_path = "Src_Model/tfidf_model.pkl"
 reviews_file_path = "Data/sample30.csv"
 
-
-#Loading all the pickle files and inject that in model class
+#***********************************************************#
+#Loading all the pickle files and inject that in model class#
+#***********************************************************#
 def save_obj(obj, file_name ):
     with open(file_name + '.pkl', 'wb') as f:
         pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
@@ -54,16 +55,19 @@ def set_up_model():
     model.set_tfidf_model(get_tfidf_model())
     model.set_up_text_processing()
     return model
-
+#***********************************************************#
 
 model = set_up_model()
 
 @app.route("/", methods=["POST", "GET"])
 def home():
     if request.method == "POST":
-        user = request.form['projectFilepath']
-        data_2 = model.get_recommendation_for_user(user)
-        return render_template('index.html', data=data_2, init_msg = "----")
+        user = str(request.form['projectFilepath'])
+        if model.validate_user(user):
+            data_2 = model.get_recommendation_for_user(user)
+            return render_template('index.html', data=data_2, init_msg = "Recommendations for " + user)
+        else:
+            return render_template('index.html', data = [], init_msg = "No such user found")
 
 
     if request.method == "GET":

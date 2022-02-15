@@ -1,26 +1,57 @@
 <html>
     <head>
+        <style>
+            .center_text {
+                text-align: center;
+            }
 
+            .center {
+              margin: auto;
+              width: 60%;
+              border: 5px solid #dbe8ee;
+              padding: 10px;
+            }
+
+            .center_inner {
+              margin: auto;
+              width: 60%;
+              border: 1px solid rgb(185, 191, 197);
+              padding: 10px;
+            }
+
+            .center_user_form {
+              margin: auto;
+              width: 40%;
+              border: 1px solid rgb(185, 191, 197);
+              padding: 10px;
+            }
+        </style>
     </head>
 
     <body>
-
-        <form action="#" method="post">
-            <input type="text" name="projectFilepath">
-            <input type="submit">
-        </form>
-
         <br>
-        <h2> Recommendation System </h2>
-
+        <div class = "center_text"><h1> Recommendation System </h1></div>
+        <div class="center">
+            <br>
+            
+            <div class= "center_inner">
+            <form action="#" method="post">
+                <p class = "center_text">Enter the user-name (case sensitive) and click on submit button</p>
+                <input  class="center_user_form" type="text" name="projectFilepath">
+                <input class="center_user_form" type="submit">
+            </form>
+            </div>
+            <br>
         
             {{init_msg}}
+            <br>
             {% for item_record in data %}
-                    <h3><p>{{item_record.name}}</p></h3>
+                <h3><p>{{item_record.name}}</p></h3>
                     <ul>
                         <li>{{item_record.brand}}</li>
                         <li>{{item_record.categories}}</li>
                     </ul>   
             {% endfor %}
+        </div>
     </body>
 </html>

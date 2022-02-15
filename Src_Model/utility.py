@@ -19,26 +19,24 @@ class Model:
     def __init__(self):
         print("*****Model Object has been created*****")
 
+    # *****************************************************************
+    # ***************** Setting up the model instance *****************
+    # *****************************************************************
     def clean_reviews(self, review_df):
-        print(review_df.shape)
         # Lets drop the records where username isn't given
         #review_df = review_df[review_df['user_sentiment'].notna()]
         review_df = review_df[review_df['reviews_username'].notna()]
-        print('Review DF Shape', review_df.shape)
 
         # Lets drop duplicate reviews
         review_df = review_df.drop_duplicates(subset = ['reviews_text','id', 'reviews_username', 'user_sentiment'], keep = 'last').reset_index(drop = True)
-        print('Review DF Shape', review_df.shape)
 
         # Lets take this review df's copy in rating df
         rating_df = review_df.copy()
 
         # Lets also drop the reviews that were collected as part of promotion
         review_df = review_df[~review_df.reviews_text.str.endswith('This review was collected as part of a promotion.')]
-        print('Review DF Shape', review_df.shape)
 
         rating_df = rating_df.drop_duplicates(subset = ['reviews_username', 'reviews_rating', 'id'], keep = 'last').reset_index(drop = True)
-        print('Rating DF Shape', rating_df.shape)
 
         self.review_df = review_df
         self.rating_df = rating_df
@@ -56,22 +54,28 @@ class Model:
         dummy_df['reviews_rating'] = dummy_df['reviews_rating'].apply(lambda x: 0 if x>=1 else 1)
         dummy_train_pivot = dummy_df.pivot_table(index='reviews_username', columns='id', values='reviews_rating').fillna(1)
         # final rating dataframe
-        print("*****Before creating item final rating")
         self.item_final_rating = np.multiply(item_predicted_ratings,dummy_train_pivot)
-        print("*****After creating item final rating")
 
     def set_tfidf_model(self, tfidf_model):
         self.tfidf_model = tfidf_model
+    # *****************************************************************
+
+
+
+    # *****************************************************************
+    # ************************ User Interaction ***********************
+    # *****************************************************************
+    def validate_user(self, username):
+        return username in set(self.review_df.reviews_username)
 
     def get_recommendation_for_user(self, username):
-        print("Generated Recommendation Model")
-        print("Shape of review_Df is", self.review_df.shape)
         top_20 = self.item_final_rating.loc[username].sort_values(ascending=False)[0:20]
-        print("Got top 20 products")
         top_5 = self.filter_recommended_products(list(top_20.index))
-        print(top_5[0])
         return  top_5
-    
+    # *****************************************************************
+
+
+
     # *****************************************************************
     # ***************** Filter by possitive Sentiment *****************
     # *****************************************************************
@@ -92,18 +96,16 @@ class Model:
     def classify_sentiment(self, recommended_df):
         X = self.text_processing(recommended_df)
         #classification_model = self.get_classification_model()
-        print('Classification - Got classification model')
         y_pred = self.classification_model.predict(X)
-        print('Classification - prediction made')
         return y_pred
     
     def get_top_5_positive_items(self, recommended_df):
         recommended_df = recommended_df[recommended_df.pred_sentiment == 'Positive']
-        print(recommended_df.id.value_counts())
         top_5 = recommended_df.id.value_counts().index[0:5]
-        print(top_5)
         return top_5
     # *****************************************************************
+
+
 
     # *****************************************************************
     # *****************Text Processing for review text*****************
@@ -111,15 +113,11 @@ class Model:
     def text_processing(self, recommended_df):
         recommended_df.reviews_text = recommended_df.reviews_text.apply(self.text_lower)
         recommended_df.reviews_title = recommended_df.reviews_title.apply(self.text_lower)
-        print('Text Processing - Lower case applied')
         recommended_df['review'] = recommended_df.reviews_title + ". " + recommended_df.reviews_text
-        print('Text Processing - got combined Review data:', recommended_df.shape)
 
         recommended_df.review = recommended_df.reviews_text.apply(self.lemmatize_and_pos)
-        print('Text Processing - lemmatization applied')
 
         tfidf = self.get_tfidf_vec(recommended_df.review)
-        print('Text Processing - Got TFIDF')
         return tfidf
 
     def set_up_text_processing(self):
@@ -160,7 +158,4 @@ class Model:
     def get_tfidf_vec(self, text):
         return self.tfidf_model.transform(text)
     # *****************************************************************
-    # *****************************************************************
-
-    def get_data():
-        return 'data'
+    
